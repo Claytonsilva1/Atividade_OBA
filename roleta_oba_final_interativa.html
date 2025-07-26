@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Roleta OBA - Sorteio de Prova</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background: #4a90e2;
+      color: white;
+      padding: 20px;
+      margin: 0;
+    }
+    .subtitle {
+      background: #ffd700;
+      padding: 10px;
+      font-size: 18px;
+      color: #222;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+    #spin {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 18px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    #spin:hover {
+      background: #45a049;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      border: 2px solid #4a90e2;
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Atividade da UCE ASTRONOMIA</h1>
+  <div class="subtitle">Gire a roleta para sortear aleatoriamente o ano da sua prova! Você já será redirecionado para ela.</div>
+
+  <canvas id="wheel" width="500" height="500"></canvas>
+  <br>
+  <button id="spin">Girar Roleta</button>
+
+  <div id="result" style="display:none;"></div>
+
+  <script>
+    const years = [2019, 2020, 2021, 2022, 2023, 2024, 2025];
+    const links = {
+      2019: "http://www.oba.org.br/sisglob/sisglob_arquivos/2019/OBA2019_CARTA_E_PROVA_NIVEL_4.pdf",
+      2020: "http://www.oba.org.br/sisglob/sisglob_arquivos/2020/Prova%20nivel%204%20da%2023%20OBA%20DE%202020%20VIRTUAL.pdf",
+      2021: "http://www.oba.org.br/sisglob/sisglob_arquivos/Prova%20do%20nivel%204%20da%2024%20OBA%20DE%202021.pdf",
+      2022: "http://www.oba.org.br/sisglob/sisglob_arquivos/downloads/Prova%20nivel%204%20da%2025%20OBA%20DE%202022.pdf",
+      2023: "http://www.oba.org.br/sisglob/sisglob_arquivos/downloads/Prova%20n%C3%ADvel%204%20da%2026%20OBA%20de%202023.pdf",
+      2024: "http://www.oba.org.br/sisglob/sisglob_arquivos/downloads/Prova%20n%C3%ADvel%204%20da%2027%20OBA%20de%202024-compactado.pdf",
+      2025: "http://www.oba.org.br/sisglob/sisglob_arquivos/downloads/Prova%20nivel%204%20da%2028%20OBA%20DE%202025_compressed.pdf"
+    };
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinButton = document.getElementById("spin");
+    const resultBox = document.getElementById("result");
+
+    let startAngle = 0;
+    let arc = Math.PI * 2 / years.length;
+    let spinTimeout = null;
+
+    function drawWheel() {
+      const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#66BB6A"];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < years.length; i++) {
+        const angle = startAngle + i * arc;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.beginPath();
+        ctx.moveTo(250, 250);
+        ctx.arc(250, 250, 200, angle, angle + arc, false);
+        ctx.lineTo(250, 250);
+        ctx.fill();
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.translate(250, 250);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(years[i], 180, 10);
+        ctx.restore();
+      }
+    }
+
+    function rotateWheel() {
+      const spins = 15 + Math.floor(Math.random() * 10);
+      const randomIndex = Math.floor(Math.random() * years.length);
+      const finalAngle = (Math.PI * 2 * spins) + (Math.PI * 2 * randomIndex / years.length) + arc / 2;
+
+      let angle = 0;
+      const duration = 4000;
+      const start = performance.now();
+
+      function animate(time) {
+        const progress = Math.min((time - start) / duration, 1);
+        angle = finalAngle * easeOutCubic(progress);
+        startAngle = angle % (Math.PI * 2);
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const selectedIndex = years.length - Math.floor((startAngle + arc / 2) / arc) % years.length;
+          const selectedYear = years[selectedIndex % years.length];
+          resultBox.textContent = "Ano sorteado: " + selectedYear;
+          resultBox.style.display = "block";
+          setTimeout(() => {
+            window.open(links[selectedYear], "_blank");
+          }, 3000);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOutCubic(t) {
+      return (--t) * t * t + 1;
+    }
+
+    drawWheel();
+    spinButton.addEventListener("click", rotateWheel);
+  </script>
+</body>
+</html>
